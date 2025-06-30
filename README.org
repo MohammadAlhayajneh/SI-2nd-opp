@@ -1,0 +1,405 @@
+* Sistemas Embebidos: Exame 2a oportunidade curso 24/25
+
+*LER CON ATENCIÓN*
+
+Unha parte do exame consiste no desenvolvemento dunha simple *CLI*
+(/Command Line Interface/, isto é, unha liña de comandos) para
+interaccionar coa vosa placa FRDM-KL46Z mediante, neste caso, a
+interface de depuración: comunicación serie coa SDA da placa a través
+do porto USB empregando o driver UART da SDK.
+
+Partiredes deste repositorio git, que debedes clonar:
+[[https://gitlab.citic.udc.es/emilio.padron/se2425_2op]]
+
+Cando compiledes ese código (o Makefile para facelo é o primeiro
+exercicio do exame) disporedes da comunicación serie a través de USB
+mediante a interface de depuración xa comentada (podedes ver as
+funcións e macros que ofrece esta interface, e que teredes que
+empregar, en /utilities/fsl_debug_console.h/).
+
+Podedes usar [[https://en.wikipedia.org/wiki/Minicom][minicom]] ou calquera outro software de comunicación serie
+para probar o voso código. Tedes un exemplo do seu uso xunto a esta
+tarefa do exame, ademais dun binario funcional que manda a cadea
+'hello world' se queredes probar a comunicación serie coa vosa placa.
+
+Para levar a cabo as tarefas deste exame podedes engadir todos os
+arquivos a maiores que precisedes, e engadir todo o código que
+precisedes no /main.c/. O resto de arquivos xa existentes no
+repositorio non vos está permitido cambialos, nin movelos, nin
+sobreescribilos con outros (agás unha moi boa xustificación). Isto
+inclúe o /linking script/ e o /startup/, que, como vedes, non son os
+habituais.
+
+*ENTREGABLE*: o mesmo repositorio git do que partides, cos vosos
+/commits/ por riba do previamente existente (que non vos está
+permitido modificar). Cada exercicio estará na súa propia rama.
+Podedes subir o repositorio (privado) a algún sitio en liña
+(gitlab/github/etc.) e pasarme a ligazón (e unha invitación) ou subir
+un tarball/zip con todo (pero debe estar o repositorio, isto é, o
+directorio .git). É obrigatorio que fagades varios commits, non me
+vale un commit «gordo» con todo o voso traballo. Ide facendo commits
+segundo ides progresando, aínda que non haxa un estado funcional do
+código. *Non incluades arquivos binarios nos commits, nen arquivos
+froito da compilación/enlazado*.
+
+  + *1 punto do exame*. Makefile que permita xerar un binario
+    funcional, coa comunicación serie requerida, e «flashealo» na
+    placa cun simple «make flash».
+
+    Cando o binario se está executando na placa, unha conexión polo
+    porto serie debería proporcionar esta mensaxe cada vez que se fai
+    RESET:
+
+    ~Plantilla exame Sistemas Embebidos: 2a oportunidade 24/25~
+
+    O(s) commit(s) que precisedes para engadir o Makefile faranse na
+    propia rama =main= xa existente. Engade tamén un commit mudando
+    a mensaxe orixinal polo teu nome completo.
+
+    Engade tamén unha regra /clean/ para borrar todos os arquivos
+    xerados durante a construción do binario, pero deixando o binario;
+    e unha regra /cleanall/ que, ademais, borra tamén o binario.
+
+    *IMPORTANTE*: Usade como flag de linkado ~--specs=nosys.specs~ en
+    lugar do habitual ~--specs=nano.specs~ que viñamos empregando.
+
+  + *3 puntos do exame*. Crea unha rama chamada =fsm= a partir da rama
+    =main= na que xa tes o teu Makefile funcional.
+
+    Este exercicio consiste na implementación dun autómata simple que
+    simule un cadeado simple, con desbloqueo por código. O sistema
+    acepta unha secuencia de 4 pulsacións sobre dous botóns, A e B.
+    A persoa que desexa abrir o cadeado ten que acertar a secuencia
+    de apertura previamente definida. Por exemplo: A -> B -> A -> A
+
+    - O sistema fará uso dos dous botóns da placa, xestionados
+      mediante *interrupcións*:
+      + O botón esquerdo (collendo a placa pola zona do /slider/, a
+        parte contraria aos conectores USB) será o A.
+      + O botón dereito será o B.
+
+    - A saída do sistema usará os dous LEDs da placa deste xeito:
+      + O LED vermello indica o estado PECHADO.
+      + O LED verde indica o estado ABERTO.
+      + Cando se está a introducir a secuencia, pero aínda non se
+        completou, os dous LEDs permanecen apagados.
+
+    O cadeado está inicialmente PECHADO. O autómata debe reaccionar de
+    forma inmediata a cada pulsación, actualizando o estado e os LEDs.
+
+  + *3 puntos do exame*. Novamente, a partir da rama =main= co teu
+    Makefile, crea unha rama chamada =timer= para este exercicio.
+
+    A tarefa consiste en programar o acendido e apagado dun dos dous
+    LEDs (un calquera, o que prefirades) cunha frecuencia determinada
+    de entre as seguintes:
+    - 1 Hz (1 acendido cada segundo)
+    - 2 Hz (2 acendidos cada segundo, isto é, acéndese cada medio
+      segundo)
+    - 0.5 Hz (1 acendido cada 2 segundos)
+    - 0 Hz (o LED permanece apagado)
+
+    O sistema permitirá conmutar entre eses 4 estados do LED mediante
+    os dous botóns, seguindo esta progresión:
+
+    =0 Hz <-> 0.5 Hz <-> 1 Hz <-> 2 Hz=
+
+    O botón da dereita, incremente a velocidade (ata o máximo de 2
+    Hz), e o da esquerda diminúea (ata estar o LED apagado). O sistema
+    comezará acendendo o LED cunha frecuencia de 1 Hz.
+
+    O LCD da placa mostrará en todo momento os Hz cos que está a
+    funcionar o LED.
+
+    Podedes empregar o temporizador da placa que prefirades para levar
+    a conta do tempo, agás o SysTick.
+
+  + *3 puntos do exame*. Crea unha rama chamada =benchmark= para este
+    exercicio, novamente partindo da rama =main= xa co Makefile.
+
+    A tarefa consiste en levar a cabo o /benchmarking/ de distintas
+    implementacións dunha función /conta_uns()/, que recibe un enteiro
+    sen signo de 32 bits e devolve cantos deses 32 bits son 1s.
+
+    Desenvolverase primeiro unha versión *naive* en C, que cun bucle
+    fixo de 32 iteracións conta o número de 1s atopados no número,
+    usando unha máscara dun bit.
+
+    A segunda versión partirá do código *ensamblador* xerado polo
+    compilador cando compilades con /-Ofast/ (e, por suposto, para o
+    repertorio de instrucións do ARM CortexM0+ da nosa placa). Esa
+    segunda versión será unha optimización vosa sobre ese ensamblador
+    xerado polo compilador, sen mudar de algoritmo: seguimos coa idea
+    de percorrer os 32 bits do número para contar os 1s que aparezan,
+    pero mellorando o que o compilador nos ofrece.
+
+    A terceira versión implementará, en *C*, o algoritmo de /Brian
+    Kernighan/, que consiste en desfacerse, en cada iteración, do 1
+    menos significativo do número, ata quedar sen ningún, contando
+    cantos pasos precisamos para facelo. Deste xeito, en lugar de ter
+    unha complexidade fixa de 32 iteracións, a complexidade
+    computacional depende do número de 1s. Para eliminar o 1 menos
+    significativo, en cada iteración fai un AND bit a bit entre o
+    número resultante da iteracion anterior e ese mesmo número
+    menos 1. Esa resta, precisamente, elimina sempre o bit menos
+    significativo que está a 1. Este é o pseudocódigo dese bucle:
+
+    #+BEGIN_SRC C
+    while (x) {
+      x &= x - 1;
+      count++;
+    }
+    #+END_SRC
+
+    Medirase o rendemento das 3 implementacións propostas, a primeira
+    e a terceira en C, e a segunda en ensamblador, empregando o
+    temporizador *SysTick* para medir os ciclos de reloxo consumidos
+    en cada unha delas. Cada implementación da función estará nun
+    arquivo fonte propio, cos seguintes nomes:
+    - conta_uns_A(), nun arquivo fonte contaunsA.c. Versión en C co
+      bucle de 32 iteracións.
+    - conta_uns_B(), nun arquivo fonte contaunsB.s. A versión en ASM
+      que optimice a implementación anterior que ofrece o compilador
+      (/-Ofast/).
+    - conta_uns_C(), nun arquivo fonte contaunsC.c. A versión en C do
+      algoritmo de Kernighan.
+
+    O programa correrá unha vez cada unha desas implementacións,
+    medindo os ciclos que lle leva a cada unha, e presentará pola
+    interfaz de porto serie o resultado do /benchmark/, algo coma isto:
+
+    #+begin_example
+    Benchmarking da rutina conta_uns:
+    Número de 32 bits usado como argumento da rutina: 1554098974
+    Elapsed ticks con conta_uns_A(): 280 (Resultado da rutina: 16)
+    Elapsed ticks con conta_uns_B(): 178 (Resultado da rutina: 16)
+    Elapsed ticks con conta_uns_C(): 104 (Resultado da rutina: 16)
+    #+end_example
+
+    O número entre paréntese sérvenos para saber que o resultado
+    das rutinas é correcto, e polo tanto a implementación é correcta.
+    Neste exemplo estanse a contar os 16 uns en 0x5ca1ab1e.
+
+    Enche esta táboa cos resultados do teu /benchmarking/, na primeira
+    columna compilando sen optimizacións (=-O0=), e na segunda columna
+    co máximo nivel de optimización (=-Ofast=):
+
+    |----------------+-------------------+-------------------|
+    | Código         | Sen optimizacións | Con optimizacións |
+    |----------------+-------------------+-------------------|
+    | conta_uns_A()  |                   |                   |
+    | conta_uns_B()  |                   |                   |
+    | conta_uns_C()  |                   |                   |
+    |----------------+-------------------+-------------------|
+
+    Para unha correcta contextualización dos teus resultados
+    experimentais, aporta tamén estes datos:
+
+    |--------------------------+---------|
+    | Software empregado       | Versión |
+    |--------------------------+---------|
+    | Compilador de GNU (GCC)  |         |
+    | Ensamblador de GNU (GAS) |         |
+    | OpenOCD                  |         |
+    |--------------------------+---------|
+
+    Engade un /commit/ incluíndo todos eses datos nas táboas, claro.
+
+* Embedded Systems: Second-Chance Exam for the 24/25 Academic Year
+
+*READ CAREFULLY*
+
+Part of the exam consists of developing a simple *CLI*
+(/Command Line Interface/) to interact with your FRDM-KL46Z board
+using, in this case, the debug interface: serial communication with
+the board's SDA via the USB port, using the UART driver from the SDK.
+
+You will start from this git repository, which you must clone:
+[[https://gitlab.citic.udc.es/emilio.padron/se2425_2op]]
+
+When you compile that code (creating the Makefile is the first exam
+task), you will have serial communication over USB through the
+mentioned debug interface (you can check the functions and macros
+offered by this interface, which you will need to use, in
+/utilities/fsl_debug_console.h/).
+
+You may use [[https://en.wikipedia.org/wiki/Minicom][minicom]] or any other serial communication software
+to test your code. An example of its usage is provided alongside this
+exam task, as well as a working binary that sends the string ‘hello
+world’ in case you want to test serial communication with your board.
+
+To complete the tasks in this exam you can add any additional files
+you need, and add all the code you need in /main.c/. You are not
+allowed to modify, move, or overwrite any of the existing files in the
+repository (unless you have a very good justification). This includes
+the /linking script/ and the /startup/, which, as you can see, are not
+the usual ones.
+
+*DELIVERABLE*: the same git repository you started from, with your
+/commits/ on top of the existing content (which you are not allowed to
+modify). Each exercise must be in its own branch. You may upload the
+repository (private) to an online platform (gitlab/github/etc.) and
+send me the link (and an invitation), or upload a tarball/zip with
+everything (but the repository must be included, i.e., the .git
+directory). You are required to make multiple commits: a single
+"big" commit with all your work is not acceptable. Make commits
+progressively as you advance, even if the code is not yet functional.
+*Do not include binary files in the commits, nor files resulting from
+compilation/linking*.
+
+  + *1 point of the exam*. A Makefile that generates a working binary
+    with the required serial communication, and flashes the board with
+    a simple “make flash”.
+
+    When the binary is running on the board, a serial port connection
+    should provide this message every time a RESET is performed:
+
+    ~Plantilla exame Sistemas Embebidos: 2a oportunidade 24/25~
+
+    The commit(s) needed to add the Makefile must be in the existing
+    =main= branch. Also add a commit changing the original message to
+    your full name.
+
+    Also add a /clean/ rule to delete all files generated during binary
+    construction except the binary itself; and a /cleanall/ rule that
+    also deletes the binary.
+
+    *IMPORTANT*: Use the linking flag ~--specs=nosys.specs~ instead of
+    the usual ~--specs=nano.specs~ we had been using.
+
+  + *3 points of the exam*. Create a branch named =fsm= from the
+    =main= branch where you already have your working Makefile.
+
+    This exercise consists of implementing a simple finite state
+    machine that simulates a basic lock, unlocked by entering a code.
+    The system accepts a sequence of 4 button presses using two
+    buttons, A and B. The person who wants to open the lock must enter
+    the predefined correct sequence. For example: A -> B -> A -> A
+
+    - The system will use the two buttons on the board, handled via
+      *interrupts*:
+      + The left button (holding the board with the /slider/ on the
+        left, opposite to the USB connectors) will be A.
+      + The right button will be B.
+
+    - The system's output will use the board’s two LEDs as follows:
+      + The red LED indicates the LOCKED state.
+      + The green LED indicates the UNLOCKED state.
+      + While the sequence is being entered but not yet completed, both
+        LEDs remain off.
+
+    The lock starts in the LOCKED state. The FSM must immediately react
+    to each press, updating the state and LEDs accordingly.
+
+  + *3 points of the exam*. Again, from the =main= branch with your
+    Makefile, create a branch named =timer= for this exercise.
+
+    The task is to program the blinking of one of the two LEDs (any,
+    your choice) at a certain frequency chosen from the following:
+    - 1 Hz (1 blink per second)
+    - 2 Hz (2 blinks per second, i.e., once every half second)
+    - 0.5 Hz (1 blink every 2 seconds)
+    - 0 Hz (LED stays off)
+
+    The system should allow toggling between these 4 LED states using
+    the two buttons, following this progression:
+
+    =0 Hz <-> 0.5 Hz <-> 1 Hz <-> 2 Hz=
+
+    The right button increases the speed (up to 2 Hz), and the left
+    button decreases it (down to the LED being off). The system starts
+    with the LED blinking at 1 Hz.
+
+    The board's LCD will display the current blinking frequency at all
+    times.
+
+    You may use any timer available on the board to keep track of time,
+    except SysTick.
+
+  + *3 points of the exam*. Create a branch named =benchmark= for this
+    exercise, again starting from the =main= branch with the Makefile
+    already in place.
+
+    The task is to carry out the /benchmarking/ of different
+    implementations of a /count_ones()/ function, which takes a 32-bit
+    unsigned integer and returns how many of its bits are 1s.
+
+    First, a *naive* C version will be developed, using a fixed loop of
+    32 iterations to count how many 1s are found, using a one-bit mask.
+
+    The second version will be based on the *assembly* code generated
+    by the compiler when using /-Ofast/ (and of course, for the ARM
+    CortexM0+ instruction set of our board). That second version will
+    be your optimization over that generated assembly, without changing
+    the algorithm: we still loop over all 32 bits to count 1s, just
+    improving on what the compiler provides.
+
+    The third version will implement, in *C*, the /Brian Kernighan/
+    algorithm, which consists of removing, in each iteration, the least
+    significant 1 bit of the number until none remain, counting how
+    many steps this takes. Thus, instead of a fixed 32-iteration loop,
+    the computational complexity depends on the number of 1s. To remove
+    the least significant 1, each iteration performs a bitwise AND
+    between the current number and that number minus 1. The subtraction
+    always clears the least significant bit set to 1. Here's the
+    pseudocode of that loop:
+
+    #+BEGIN_SRC C
+    while (x) {
+      x &= x - 1;
+      count++;
+    }
+    #+END_SRC
+
+    You will measure the performance of the 3 proposed implementations —
+    the first and third in C, the second in assembly — using the
+    *SysTick* timer to count the clock cycles consumed by each. Each
+    implementation must go in its own source file, with the following
+    names:
+    - count_ones_A(), in the source file countonesA.c. C version with a
+      32-iteration loop.
+    - count_ones_B(), in the source file countonesB.s. Assembly version
+      optimizing the compiler-generated one (/-Ofast/).
+    - count_ones_C(), in the source file countonesC.c. C version of
+      Kernighan’s algorithm.
+
+    The program will run each implementation once, measuring how many
+    clock cycles it takes, and will display the benchmarking result via
+    the serial port interface, like this:
+
+    #+begin_example
+    Benchmarking the count_ones routine:
+    32-bit number used as function argument: 1554098974
+    Elapsed ticks with count_ones_A(): 280 (Function result: 16)
+    Elapsed ticks with count_ones_B(): 178 (Function result: 16)
+    Elapsed ticks with count_ones_C(): 104 (Function result: 16)
+    #+end_example
+
+    The number in parentheses lets us verify that the function result
+    is correct, and therefore the implementation is valid. In this
+    example, there are 16 ones in 0x5ca1ab1e.
+
+    Fill in this table with the results of your /benchmarking/, in the
+    first column compiling without optimizations (=-O0=), and in the
+    second column with maximum optimization level (=-Ofast=):
+
+    |----------------+-------------------+-------------------|
+    | Code           | Without optimizations | With optimizations |
+    |----------------+-------------------+-------------------|
+    | count_ones_A() |                   |                   |
+    | count_ones_B() |                   |                   |
+    | count_ones_C() |                   |                   |
+    |----------------+-------------------+-------------------|
+
+    To properly contextualize your experimental results, also provide
+    this information:
+
+    |--------------------------+---------|
+    | Software used            | Version |
+    |--------------------------+---------|
+    | GNU Compiler (GCC)       |         |
+    | GNU Assembler (GAS)      |         |
+    | OpenOCD                  |         |
+    |--------------------------+---------|
+
+    Add a /commit/ including all that information in the tables, of course.
