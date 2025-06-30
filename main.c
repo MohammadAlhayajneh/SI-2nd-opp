@@ -34,8 +34,12 @@
 
 #include "fsl_device_registers.h"
 #include "fsl_debug_console.h"
-#include "board.h"
+#include "BOARD/board.h"
 #include "pin_mux.h"
+#include "fsm_lock.h"
+#include "fsl_port.h"
+#include "fsl_gpio.h"
+#include "led_timer.h"
 
 int main(void)
 {
@@ -46,11 +50,40 @@ int main(void)
   BOARD_BootClockRUN();
   BOARD_InitDebugConsole();
 
-  PRINTF("mohammad alhayajneh\r\n");
+  // Enable clock for button and LED ports
+  CLOCK_EnableClock(kCLOCK_PortC);
+  CLOCK_EnableClock(kCLOCK_PortB);
+
+  // Configure button pins as GPIO with interrupt
+  gpio_pin_config_t btn_config = {kGPIO_DigitalInput, 0};
+  GPIO_PinInit(BOARD_SW1_GPIO, BOARD_SW1_GPIO_PIN, &btn_config); // SW1 (left)
+  GPIO_PinInit(BOARD_SW3_GPIO, BOARD_SW3_GPIO_PIN, &btn_config); // SW3 (right)
+
+  // Configure interrupts for falling edge (button press)
+  PORT_SetPinInterruptConfig(BOARD_SW1_PORT, BOARD_SW1_GPIO_PIN, kPORT_InterruptFallingEdge);
+  PORT_SetPinInterruptConfig(BOARD_SW3_PORT, BOARD_SW3_GPIO_PIN, kPORT_InterruptFallingEdge);
+
+  // Enable NVIC for PORTC
+  NVIC_EnableIRQ(BOARD_SW1_IRQ);
+
+  // Initialize LED timer system
+  LED_Timer_Init();
 
   while (1)
     {
       ch = GETCHAR();
       PUTCHAR(ch);
+    }
+}
+
+void BOARD_SW1_IRQ_HANDLER(void) {
+    uint32_t flags = GPIO_PortGetInterruptFlags(BOARD_SW1_GPIO);
+    if (flags & (1U << BOARD_SW1_GPIO_PIN)) {
+        GPIO_PortClearInterruptFlags(BOARD_SW1_GPIO, 1U << BOARD_SW1_GPIO_PIN);
+        LED_Timer_ButtonLeft();
+    }
+    if (flags & (1U << BOARD_SW3_GPIO_PIN)) {
+        GPIO_PortClearInterruptFlags(BOARD_SW3_GPIO, 1U << BOARD_SW3_GPIO_PIN);
+        LED_Timer_ButtonRight();
     }
 }
