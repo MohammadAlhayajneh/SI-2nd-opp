@@ -29,7 +29,12 @@ C_SOURCES = \\\ \
   utilities/fsl_str.c \
   utilities/fsl_assert.c \
   utilities/fsl_debug_console.c \
-  include/system_MKL46Z4.c
+  include/system_MKL46Z4.c \
+  fsm_lock.c \
+  led_timer.c \
+  countonesA.c \
+  countonesB.s \
+  countonesC.c
 
 ASM_SOURCES = startup_MKL46Z4.S
 

@@ -34,23 +34,63 @@
 
 #include "fsl_device_registers.h"
 #include "fsl_debug_console.h"
-#include "board.h"
+#include "BOARD/board.h"
 #include "pin_mux.h"
+#include "fsm_lock.h"
+#include "fsl_port.h"
+#include "fsl_gpio.h"
+#include "led_timer.h"
+#include "countones.h"
+#include "MKL46Z4.h"
 
 int main(void)
 {
-  char ch;
+    BOARD_InitPins();
+    BOARD_BootClockRUN();
+    BOARD_InitDebugConsole();
 
-  /* Init board hardware. */
-  BOARD_InitPins();
-  BOARD_BootClockRUN();
-  BOARD_InitDebugConsole();
+    uint32_t test_val = 1554098974U; // 0x5ca1ab1e
+    uint32_t resultA, resultB, resultC;
+    uint32_t ticksA, ticksB, ticksC;
 
-  PRINTF("mohammad alhayajneh\r\n");
+    // SysTick setup
+    SysTick->LOAD = 0xFFFFFF;
+    SysTick->VAL = 0;
+    SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_ENABLE_Msk;
 
-  while (1)
-    {
-      ch = GETCHAR();
-      PUTCHAR(ch);
+    PRINTF("Benchmarking the count_ones routine:\r\n");
+    PRINTF("32-bit integer used as argument: %u\r\n", test_val);
+
+    // A
+    SysTick->VAL = 0;
+    resultA = count_ones_A(test_val);
+    ticksA = 0xFFFFFF - SysTick->VAL;
+
+    // B
+    SysTick->VAL = 0;
+    resultB = count_ones_B(test_val);
+    ticksB = 0xFFFFFF - SysTick->VAL;
+
+    // C
+    SysTick->VAL = 0;
+    resultC = count_ones_C(test_val);
+    ticksC = 0xFFFFFF - SysTick->VAL;
+
+    PRINTF("Elapsed ticks with count_ones_A(): %lu (Function result: %lu)\r\n", ticksA, resultA);
+    PRINTF("Elapsed ticks with count_ones_B(): %lu (Function result: %lu)\r\n", ticksB, resultB);
+    PRINTF("Elapsed ticks with count_ones_C(): %lu (Function result: %lu)\r\n", ticksC, resultC);
+
+    while (1) {}
+}
+
+void BOARD_SW1_IRQ_HANDLER(void) {
+    uint32_t flags = GPIO_PortGetInterruptFlags(BOARD_SW1_GPIO);
+    if (flags & (1U << BOARD_SW1_GPIO_PIN)) {
+        GPIO_PortClearInterruptFlags(BOARD_SW1_GPIO, 1U << BOARD_SW1_GPIO_PIN);
+        LED_Timer_ButtonLeft();
+    }
+    if (flags & (1U << BOARD_SW3_GPIO_PIN)) {
+        GPIO_PortClearInterruptFlags(BOARD_SW3_GPIO, 1U << BOARD_SW3_GPIO_PIN);
+        LED_Timer_ButtonRight();
     }
 }
